@@ -6,3 +6,7 @@ cython
 pyqtgraph
 PyQt5
 pyttsx3
+transformers
+openai
+tiktoken
+SpeechRecognition
