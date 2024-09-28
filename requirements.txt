@@ -1,0 +1,8 @@
+kivy
+pyaudio
+numpy
+pyaudio
+cython
+pyqtgraph
+PyQt5
+pyttsx3
