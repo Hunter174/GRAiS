@@ -3,8 +3,11 @@ import pyaudio
 import wave
 from kivy.app import App
 from kivy.uix.widget import Widget
+from kivy.uix.button import Button
+from kivy.uix.boxlayout import BoxLayout
 from kivy.graphics import Line, Color
 from kivy.clock import Clock
+
 
 class AudioVisualizerKivy(Widget):
     def __init__(self, source_type='file', file_path=None, chunk_size=1024 * 4, rate=44100, **kwargs):
@@ -16,17 +19,25 @@ class AudioVisualizerKivy(Widget):
         self.wav_file = None
         self.stream = None
         self.pyaudio_instance = pyaudio.PyAudio()
+        self.recording = False
+        self.recording_stream = None
 
-        # Initialize the data source based on the type
+        # Initialize the data source
+        self.initialize_source()
+
+        # Schedule updates at 60 FPS
+        self.update_event = Clock.schedule_interval(self.update_visualization, 1 / 60.0)
+
+    def initialize_source(self):
+        """Initialize the audio source based on the source type."""
+        self.stop_stream()  # Stop any existing stream
+
         if self.source_type == 'file':
             if not self.file_path:
                 raise ValueError("file_path must be provided for 'file' source type.")
             self.init_file_stream()
         elif self.source_type == 'mic':
             self.init_mic_stream()
-
-        # Schedule updates at 60 FPS
-        Clock.schedule_interval(self.update_visualization, 1 / 60.0)
 
     def init_file_stream(self):
         # Open the wav file
@@ -50,10 +61,28 @@ class AudioVisualizerKivy(Widget):
             frames_per_buffer=self.chunk_size
         )
 
+    def start_recording(self, filename="recorded_audio.wav"):
+        """Start recording the microphone stream to a .wav file."""
+        if self.source_type == 'mic':
+            self.recording = True
+            self.recording_filename = filename
+            self.recording_stream = wave.open(self.recording_filename, 'wb')
+            self.recording_stream.setnchannels(1)
+            self.recording_stream.setsampwidth(self.pyaudio_instance.get_sample_size(pyaudio.paInt16))
+            self.recording_stream.setframerate(self.rate)
+            print("Recording started...")
+
+    def stop_recording(self):
+        """Stop recording the microphone stream and save the file."""
+        if self.recording:
+            self.recording = False
+            self.recording_stream.close()
+            print(f"Recording stopped and saved as {self.recording_filename}")
+
     def read_file_data(self):
         data = self.wav_file.readframes(self.chunk_size)
         if len(data) == 0:
-            Clock.unschedule(self.update_visualization)
+            Clock.unschedule(self.update_event)
             return np.zeros(self.chunk_size, dtype=np.int16)
 
         # Play the audio data through the PyAudio stream
@@ -65,6 +94,11 @@ class AudioVisualizerKivy(Widget):
     def read_mic_data(self):
         # Capture audio data from the microphone
         data = self.stream.read(self.chunk_size, exception_on_overflow=False)
+
+        # If recording, write the data to the recording file
+        if self.recording and self.recording_stream:
+            self.recording_stream.writeframes(data)
+
         return np.frombuffer(data, dtype=np.int16)
 
     def update_visualization(self, dt):
@@ -95,16 +129,75 @@ class AudioVisualizerKivy(Widget):
             # Draw the waveform as a line
             Line(points=points, width=1.5)
 
-    def on_stop(self):
-        # Clean up resources
+    def switch_source(self, new_source_type, file_path=None):
+        """Switch between 'file' and 'mic' sources."""
+        self.source_type = new_source_type
+        if file_path:
+            self.file_path = file_path
+
+        # Reinitialize the audio source
+        self.initialize_source()
+
+        # Reschedule the update event to ensure the visualization continues
+        if not self.update_event.is_triggered:
+            self.update_event = Clock.schedule_interval(self.update_visualization, 1 / 60.0)
+
+    def stop_stream(self):
+        """Stop and clean up the current stream."""
         if self.source_type == 'file' and self.wav_file:
             self.wav_file.close()
         if self.stream:
             self.stream.stop_stream()
             self.stream.close()
+        if self.recording:
+            self.stop_recording()
+
+    def on_stop(self):
+        """Clean up resources when the app is stopped."""
+        self.stop_stream()
         self.pyaudio_instance.terminate()
+
 
 class AudioApp(App):
     def build(self):
-        # You can choose either 'file' or 'mic' as the source type
-        return AudioVisualizerKivy(source_type='mic')  # Switch to 'file' if you want to visualize from a file
+        layout = BoxLayout(orientation='vertical')
+
+        # Create the visualizer widget with an initial source
+        self.visualizer = AudioVisualizerKivy(source_type='file', file_path='test.wav')
+
+        # Create a button to switch between mic and file
+        self.switch_button = Button(text="Switch to Mic", size_hint=(1, 0.1))
+        self.switch_button.bind(on_press=self.switch_source)
+
+        # Create a button to start/stop recording
+        self.record_button = Button(text="Start Recording", size_hint=(1, 0.1))
+        self.record_button.bind(on_press=self.toggle_recording)
+
+        # Add the visualizer and buttons to the layout
+        layout.add_widget(self.visualizer)
+        layout.add_widget(self.switch_button)
+        layout.add_widget(self.record_button)
+
+        return layout
+
+    def switch_source(self, instance):
+        """Switch between file and mic sources based on the current source."""
+        if self.visualizer.source_type == 'file':
+            self.visualizer.switch_source('mic')
+            instance.text = "Switch to File"
+        else:
+            self.visualizer.switch_source('file', file_path='test.wav')
+            instance.text = "Switch to Mic"
+
+    def toggle_recording(self, instance):
+        """Start or stop recording based on the current state."""
+        if self.visualizer.recording:
+            self.visualizer.stop_recording()
+            instance.text = "Start Recording"
+        else:
+            self.visualizer.start_recording(filename="recorded_audio.wav")
+            instance.text = "Stop Recording"
+
+
+if __name__ == '__main__':
+    AudioApp().run()
