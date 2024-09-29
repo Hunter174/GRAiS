@@ -1,0 +1,55 @@
+# Ignore macOS system files
+.DS_Store
+
+# Ignore Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Ignore Python-specific files
+*.py[cod]
+__pycache__/
+*.so
+
+# Ignore virtual environments
+env/
+venv/
+ENV/
+ENV.bak/
+*.env
+
+# Ignore PyCharm project files
+.idea/
+*.iml
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore test coverage files
+.coverage
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Ignore log and other miscellaneous files
+*.log
+*.pot
+*.mo
+
+# Ignore build files
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Ignore compiled files
+*.dll
+*.exe
+*.o
+*.a
+*.out
+*.obj
+
+# Ignore database files
+*.sqlite3
+*.db
