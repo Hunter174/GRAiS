@@ -1,50 +1,79 @@
 from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-from audio_player import AudioVisualizerKivy
-from tts import RealTimeTTS
-from app.wav_to_text import WavToText
-from app.responder import Responder
+from kivy.uix.boxlayout import BoxLayout
+from app.logic.audio_player import AudioPlayer
+from app.widgets.audio_visualizer_widget import AudioVisualizerWidget
+from app.widgets.responder_widget import ResponderWidget
+from app.widgets.tts_widget import TTSWidget
+from app.widgets.wav_to_text_widget import WavToTextWidget
+import os
+import threading
 
-class MainApp(App):
+class AudioApp(App):
     def build(self):
+        # Define the base directory for audio files
+        audio_dir = os.path.join(os.path.dirname(__file__), 'audio')
+        self.file_path = os.path.join(audio_dir, 'GRAiS_AUDIO.wav')
+        self.recorded_file_path = os.path.join(audio_dir, 'USER_AUDIO.wav')
+
         layout = BoxLayout(orientation='vertical')
 
-        # Initialize components
-        self.visualizer = AudioVisualizerKivy(source_type='mic')
-        self.tts = RealTimeTTS()
-        self.responder = Responder()
+        # Instantiate the audio player and visualizer
+        self.audio_player = AudioPlayer(source_type='file', file_path=self.file_path, recording_filename=self.recorded_file_path)
+        self.visualizer = AudioVisualizerWidget(audio_player=self.audio_player)
 
-        # Button to start/stop recording
-        self.record_button = Button(text="Start Recording", size_hint=(1, 0.1))
-        self.record_button.bind(on_press=self.toggle_recording)
+        # Instantiate Responder, TTS, and WavToText widgets
+        self.responder_widget = ResponderWidget()
+        self.tts_widget = TTSWidget()
+        self.wav_to_text_widget = WavToTextWidget(file_path=self.recorded_file_path)
 
-        # Add widgets to the layout
+        # Create a button to start recording on press and stop on release
+        self.record_button = Button(text="Press and Hold to Record", size_hint=(1, 0.1))
+        self.record_button.bind(on_press=self.start_recording)
+        self.record_button.bind(on_release=self.stop_and_process_audio)
+
+        # Add widgets and buttons to the layout
         layout.add_widget(self.visualizer)
         layout.add_widget(self.record_button)
 
         return layout
 
-    def toggle_recording(self, instance):
-        if self.visualizer.recording:
-            self.visualizer.stop_recording()
-            instance.text = "Start Recording"
+    def start_recording(self, instance):
+        """Start recording when the button is pressed."""
+        self.audio_player.start_recording(filename=self.recorded_file_path)
+        instance.text = "Recording..."
 
+    def stop_and_process_audio(self, instance):
+        """Stop recording when the button is released and process the audio."""
+        self.audio_player.stop_recording()
+        instance.text = "Press and Hold to Record"
+
+        # Process the audio in a separate thread to avoid blocking the UI
+        threading.Thread(target=self.process_audio).start()
+
+    def process_audio(self):
+        try:
             # Convert recorded audio to text
-            wav_to_text = WavToText("recorded_audio.wav")
-            transcribed_text = wav_to_text.convert_to_text()
+            transcribed_text = self.wav_to_text_widget.convert()
             print(f"Transcribed Text: {transcribed_text}")
 
             # Use Responder to generate a response
-            response = self.responder.respond(transcribed_text)
+            response = self.responder_widget.respond(transcribed_text)
+            print(f"Generated Response: {response}")
 
-            # Convert response to speech and play it
-            self.tts.say(str(response))
-            self.tts.engine.runAndWait()  # Ensure the TTS engine processes the speech
-        else:
-            self.visualizer.start_recording("recorded_audio.wav")
-            instance.text = "Stop Recording"
+            # Use TTS to speak the response
+            self.tts_widget.speak_text(response)
+        except Exception as e:
+            print(f"Error in processing audio: {e}")
+
+    def on_stop(self):
+        """Clean up resources when the app is stopped."""
+        self.audio_player.stop_stream()
+        self.audio_player.terminate()
+        # Ensure pyttsx3 engine is cleaned up
+        del self.tts_widget.tts
 
 
 if __name__ == '__main__':
-    MainApp().run()
+    app = AudioApp()
+    app.run()

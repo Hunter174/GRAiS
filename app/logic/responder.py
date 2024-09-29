@@ -32,6 +32,10 @@ class Responder:
             summary = self.summarize_history()
             self.history = [{"role": "assistant", "content": summary}]
 
+            # Optionally prune the history further if the summary itself is long
+            if self.count_tokens(summary) > self.max_tokens:
+                self.history = [{"role": "assistant", "content": "Summary too long, memory reset."}]
+
     def respond(self, query):
         self.manage_memory()
         self.history.append({"role": "user", "content": query})

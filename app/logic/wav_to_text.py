@@ -16,3 +16,6 @@ class WavToText:
             return f"API error: {e}"
         except FileNotFoundError:
             return "File not found."
+        except Exception as e:
+            return f"An unexpected error occurred: {e}"
+
