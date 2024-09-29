@@ -1,7 +1,6 @@
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
-from app.logic.audio_player import AudioPlayer
 from app.widgets.audio_visualizer_widget import AudioVisualizerWidget
 from app.widgets.responder_widget import ResponderWidget
 from app.widgets.tts_widget import TTSWidget
@@ -18,9 +17,8 @@ class AudioApp(App):
 
         layout = BoxLayout(orientation='vertical')
 
-        # Instantiate the audio player and visualizer
-        self.audio_player = AudioPlayer(source_type='file', file_path=self.file_path, recording_filename=self.recorded_file_path)
-        self.visualizer = AudioVisualizerWidget(audio_player=self.audio_player)
+        # Instantiate the audio player and visualizer with proper file paths
+        self.visualizer = AudioVisualizerWidget(file_path=self.file_path, recorded_file_path=self.recorded_file_path)
 
         # Instantiate Responder, TTS, and WavToText widgets
         self.responder_widget = ResponderWidget()
@@ -40,12 +38,12 @@ class AudioApp(App):
 
     def start_recording(self, instance):
         """Start recording when the button is pressed."""
-        self.audio_player.start_recording(filename=self.recorded_file_path)
+        self.visualizer.start_recording(filename=self.recorded_file_path)
         instance.text = "Recording..."
 
     def stop_and_process_audio(self, instance):
         """Stop recording when the button is released and process the audio."""
-        self.audio_player.stop_recording()
+        self.visualizer.stop_recording()
         instance.text = "Press and Hold to Record"
 
         # Process the audio in a separate thread to avoid blocking the UI
@@ -68,11 +66,10 @@ class AudioApp(App):
 
     def on_stop(self):
         """Clean up resources when the app is stopped."""
-        self.audio_player.stop_stream()
-        self.audio_player.terminate()
+        self.visualizer.stop_stream()
+        self.visualizer.terminate()
         # Ensure pyttsx3 engine is cleaned up
         del self.tts_widget.tts
-
 
 if __name__ == '__main__':
     app = AudioApp()

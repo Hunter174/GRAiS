@@ -1,13 +1,39 @@
+from app.logic.audio_player import AudioPlayer
 from kivy.uix.widget import Widget
 from kivy.clock import Clock
 from kivy.graphics import Line, Color
 import numpy as np
 
 class AudioVisualizerWidget(Widget):
-    def __init__(self, audio_player, **kwargs):
+    def __init__(self, file_path=None, recorded_file_path=None, **kwargs):
         super().__init__(**kwargs)
-        self.audio_player = audio_player
+        self.file_path = file_path
+        self.recorded_file_path = recorded_file_path
+        self.audio_player = AudioPlayer(source_type='file', file_path=self.file_path, recording_filename=self.recorded_file_path)
+        self.update_event = None  # Track visualization update event
+
+    def start_recording(self, filename=None):
+        """Start recording through the AudioPlayer."""
+        if filename:
+            self.recorded_file_path = filename
+        self.audio_player.switch_source('mic')
+        self.audio_player.start_recording(self.recorded_file_path)
+        self.start_visualization()  # Start visualizing mic input
+
+    def stop_recording(self):
+        """Stop recording through the AudioPlayer."""
+        self.audio_player.stop_recording()
+        self.stop_visualization()
+
+    def start_visualization(self):
+        """Start visualizing audio data."""
         self.update_event = Clock.schedule_interval(self.update_visualization, 1 / 60.0)
+
+    def stop_visualization(self):
+        """Stop visualizing audio data."""
+        if self.update_event:
+            Clock.unschedule(self.update_event)
+            self.update_event = None
 
     def update_visualization(self, dt):
         data_int = None

@@ -5,7 +5,7 @@ from kivy.clock import Clock
 
 
 class AudioPlayer:
-    def __init__(self, source_type='file', file_path=None, recording_filename=None,chunk_size=1024 * 4, rate=44100):
+    def __init__(self, source_type='file', file_path=None, recording_filename=None, chunk_size=1024 * 4, rate=44100):
         self.recording_filename = recording_filename
         self.source_type = source_type
         self.file_path = file_path
@@ -16,8 +16,7 @@ class AudioPlayer:
         self.pyaudio_instance = pyaudio.PyAudio()
         self.recording = False
         self.recording_stream = None
-
-        # Initialize the data source
+        self.recording_event = None
         self.initialize_source()
 
     def initialize_source(self):
@@ -114,6 +113,22 @@ class AudioPlayer:
             self.recording_stream.setframerate(self.rate)
             print(f"Recording started... Saving to {self.recording_filename}")
 
+            # Open the microphone stream and start recording
+            self.init_mic_stream()
+
+            # Schedule continuous data capture while recording
+            self.recording_event = Clock.schedule_interval(self.record_mic_data, 0)
+
+    def record_mic_data(self, dt):
+        """Continuously read data from the microphone and save it while recording."""
+        if self.recording:
+            try:
+                data = self.stream.read(self.chunk_size, exception_on_overflow=False)
+                if self.recording_stream:
+                    self.recording_stream.writeframes(data)
+            except Exception as e:
+                print(f"Error capturing audio: {e}")
+
     def stop_recording(self):
         """Stop recording the microphone stream and save the file."""
         if self.recording:
@@ -121,6 +136,14 @@ class AudioPlayer:
             if self.recording_stream:
                 self.recording_stream.close()
             print(f"Recording stopped and saved as {self.recording_filename}")
+
+    def switch_source(self, new_source_type, file_path=None):
+        """Switch between 'file' and 'mic' sources."""
+        self.source_type = new_source_type
+        self.stop_stream()  # Stop the current stream
+        if new_source_type == 'file' and file_path:
+            self.file_path = file_path
+        self.initialize_source()
 
     def terminate(self):
         """Terminate the PyAudio instance."""
