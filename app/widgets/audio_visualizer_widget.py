@@ -10,7 +10,7 @@ class AudioVisualizerWidget(Widget):
         self.file_path = file_path
         self.recorded_file_path = recorded_file_path
         self.audio_player = AudioPlayer(source_type='file', file_path=self.file_path, recording_filename=self.recorded_file_path)
-        self.update_event = None  # Track visualization update event
+        self.update_event = None
 
     def start_recording(self, filename=None):
         """Start recording through the AudioPlayer."""
@@ -28,6 +28,12 @@ class AudioVisualizerWidget(Widget):
     def start_visualization(self):
         """Start visualizing audio data."""
         self.update_event = Clock.schedule_interval(self.update_visualization, 1 / 60.0)
+
+    def stop_stream(self):
+        """Stop visualizing audio data."""
+        self.stop_visualization()
+        self.audio_player.stop_stream()
+
 
     def stop_visualization(self):
         """Stop visualizing audio data."""

@@ -25,6 +25,9 @@ class AudioApp(App):
         self.tts_widget = TTSWidget()
         self.wav_to_text_widget = WavToTextWidget(file_path=self.recorded_file_path)
 
+        # Initialize with Greeting
+        self.visualizer.start_visualization()
+
         # Create a button to start recording on press and stop on release
         self.record_button = Button(text="Press and Hold to Record", size_hint=(1, 0.1))
         self.record_button.bind(on_press=self.start_recording)
@@ -44,6 +47,7 @@ class AudioApp(App):
     def stop_and_process_audio(self, instance):
         """Stop recording when the button is released and process the audio."""
         self.visualizer.stop_recording()
+        self.visualizer.switch_source()
         instance.text = "Press and Hold to Record"
 
         # Process the audio in a separate thread to avoid blocking the UI
