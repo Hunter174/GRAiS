@@ -1,6 +1,7 @@
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
+from kivy.clock import Clock
 from app.widgets.audio_visualizer_widget import AudioVisualizerWidget
 from app.widgets.responder_widget import ResponderWidget
 from app.widgets.tts_widget import TTSWidget
@@ -41,20 +42,37 @@ class AudioApp(App):
 
     def start_recording(self, instance):
         """Start recording when the button is pressed."""
-        self.visualizer.start_recording(filename=self.recorded_file_path)
-        instance.text = "Recording..."
+        try:
+            self.visualizer.start_recording(filename=self.recorded_file_path)
+            instance.text = "Recording..."
+        except Exception as e:
+            print(f"Error starting recording: {e}")
+            instance.text = "Error: Could not record"
 
     def stop_and_process_audio(self, instance):
         """Stop recording when the button is released and process the audio."""
-        self.visualizer.stop_recording()
-        self.visualizer.switch_source()
-        instance.text = "Press and Hold to Record"
-
-        # Process the audio in a separate thread to avoid blocking the UI
-        threading.Thread(target=self.process_audio).start()
-
-    def process_audio(self):
         try:
+            # Disable the button to prevent interruptions during TTS and visualization
+            instance.disabled = True
+            self.visualizer.stop_recording()
+            instance.text = "Processing..."
+
+            # Process the audio in a separate thread to avoid blocking the UI
+            threading.Thread(target=self.process_audio, args=(instance,)).start()
+        except Exception as e:
+            print(f"Error stopping and processing audio: {e}")
+            instance.text = "Error: Could not process audio"
+            instance.disabled = False
+
+    def process_audio(self, instance):
+        try:
+            # Disable the button to prevent interruptions during TTS and visualization
+            instance.disabled = True
+            instance.text = "Processing..."
+
+            # Stop any audio input/output streams to avoid conflicts
+            Clock.schedule_once(lambda dt: self.visualizer.stop_stream())
+
             # Convert recorded audio to text
             transcribed_text = self.wav_to_text_widget.convert()
             print(f"Transcribed Text: {transcribed_text}")
@@ -63,17 +81,38 @@ class AudioApp(App):
             response = self.responder_widget.respond(transcribed_text)
             print(f"Generated Response: {response}")
 
-            # Use TTS to speak the response
-            self.tts_widget.speak_text(response)
+            # Save TTS response to a wav file
+            tts_audio_path = os.path.join(os.path.dirname(__file__), 'audio', 'TTS_RESPONSE.wav')
+
+            # Save the response as a wav file using TTS
+            self.tts_widget.convert_to_wave(response)
+
+            # Switch the visualizer to play and visualize the TTS audio
+            Clock.schedule_once(lambda dt: self.visualizer.play_and_visualize_audio(tts_audio_path))
+
+            # After playback is finished, re-enable the button
+            Clock.schedule_once(lambda dt: self.enable_button(instance), 5)  # Adjust timing based on TTS duration
+
         except Exception as e:
             print(f"Error in processing audio: {e}")
+            instance.disabled = False
+
+    def enable_button(self, instance):
+        """Re-enable the button after TTS and visualization have completed."""
+        instance.text = "Press and Hold to Record"
+        instance.disabled = False
 
     def on_stop(self):
         """Clean up resources when the app is stopped."""
-        self.visualizer.stop_stream()
-        self.visualizer.terminate()
-        # Ensure pyttsx3 engine is cleaned up
-        del self.tts_widget.tts
+        try:
+            self.visualizer.stop_stream()
+            self.visualizer.terminate()  # Terminate PyAudio safely
+
+            # Ensure pyttsx3 engine is cleaned up
+            if hasattr(self.tts_widget, 'tts'):
+                del self.tts_widget.tts
+        except Exception as e:
+            print(f"Error during cleanup: {e}")
 
 if __name__ == '__main__':
     app = AudioApp()
