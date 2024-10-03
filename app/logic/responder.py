@@ -39,29 +39,16 @@ class Responder:
     def respond(self, query):
         self.manage_memory()
         self.history.append({"role": "user", "content": query})
-
-        # Start streaming the response
         stream = self.client.chat.completions.create(
             model=self.model,
             messages=self.history,
             stream=True,
         )
-
         response_text = ""
-
-        try:
-            # Iterate through the stream to capture all chunks
-            for chunk in stream:
-                if "choices" in chunk and "delta" in chunk["choices"][0]:
-                    if chunk["choices"][0]["delta"].get("content"):
-                        response_text += chunk["choices"][0]["delta"]["content"]
-                        print(chunk["choices"][0]["delta"]["content"], end="")
-
-        except Exception as e:
-            print(f"Error during streaming: {e}")
-
-        # Append the final response to the conversation history
+        for chunk in stream:
+            if chunk.choices[0].delta.content:
+                response_text += chunk.choices[0].delta.content
+                print(chunk.choices[0].delta.content, end="")
         self.history.append({"role": "assistant", "content": response_text})
 
         return response_text
-

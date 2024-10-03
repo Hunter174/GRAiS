@@ -13,96 +13,80 @@ class AudioVisualizerWidget(Widget):
         self.update_event = None
 
     def start_recording(self, filename=None):
-        """Start recording through the AudioPlayer."""
+        """Start recording through the AudioPlayer and begin visualization."""
         if filename:
             self.recorded_file_path = filename
         try:
             self.audio_player.switch_source('mic')
             self.audio_player.start_recording(self.recorded_file_path)
-            self.start_visualization()  # Start visualizing mic input
+            self.start_visualization()
         except Exception as e:
             print(f"Error during recording start: {e}")
             self.stop_visualization()
 
     def stop_recording(self):
-        """Stop recording through the AudioPlayer."""
+        """Stop recording and visualization."""
         self.audio_player.stop_recording()
         self.stop_visualization()
 
     def start_visualization(self):
-        """Start visualizing audio data."""
+        """Schedule visualization updates."""
         self.update_event = Clock.schedule_interval(self.update_visualization, 1 / 60.0)
 
     def stop_stream(self):
-        """Stop visualizing audio data and the audio stream."""
+        """Stop visualization and audio stream."""
         self.stop_visualization()
-        if self.audio_player.stream is not None:
-            self.audio_player.stop_stream()
+        self.audio_player.stop_stream()
 
     def stop_visualization(self):
-        """Stop visualizing audio data."""
+        """Unschedule visualization updates."""
         if self.update_event:
             Clock.unschedule(self.update_event)
             self.update_event = None
 
     def update_visualization(self, dt):
-        data_int = None
+        """Read audio data and update visualization."""
+        data_int = self.audio_player.read_data()
 
-        # Read and visualize data based on the source type
-        if self.audio_player.source_type == 'file':
-            data_int = self.audio_player.read_file_data()
-            if np.all(data_int == 0):  # Check if the file stream has ended
-                self.stop_visualization()
-                return
-
-        elif self.audio_player.source_type == 'mic':
-            data_int = self.audio_player.read_mic_data()
-
-        # Ensure data_int is not None or empty
+        # Ensure data is valid
         if data_int is None or len(data_int) == 0:
+            self.stop_stream()
             return
 
-        # Apply scaling factor and offset for visualization
-        scaling_factor = 0.01  # Adjust this value to scale up or down
-        offset = 128  # Adjust this value to center the waveform
+        # Scale and offset data for visualization
+        scaling_factor = 0.01
+        offset = 128
         scaled_data = data_int * scaling_factor + offset
         data_clipped = np.clip(scaled_data, 0, 255)
 
-        # Clear the previous waveform
+        # Clear canvas and draw waveform
         self.canvas.clear()
-
-        # Draw the waveform
         with self.canvas:
             Color(0.3, 0.6, 1)
-            points = []
-            for i, value in enumerate(data_clipped):
-                x = i / len(data_clipped) * self.width
-                y = value / 255 * self.height
-                points.extend([x, y])
+            points = [self.get_point(i, value, len(data_clipped)) for i, value in enumerate(data_clipped)]
+            Line(points=sum(points, []), width=1.5)
 
-            # Draw the waveform as a line
-            Line(points=points, width=1.5)
+    def get_point(self, i, value, data_length):
+        """Helper method to calculate (x, y) coordinates for waveform points."""
+        x = i / data_length * self.width
+        y = value / 255 * self.height
+        return [x, y]
 
     def switch_source(self):
-        """Switch between file and mic sources based on the current source."""
+        """Toggle between file and mic sources."""
         try:
             if self.audio_player.source_type == 'file':
                 self.audio_player.switch_source('mic')
-                return "Switched to Mic"
             else:
                 self.audio_player.switch_source('file', file_path=self.audio_player.file_path)
-                return "Switched to File"
         except Exception as e:
             print(f"Error switching source: {e}")
-            return "Failed to switch source"
 
     def play_and_visualize_audio(self, wav_file_path):
-        """Play a wav file and visualize the audio data."""
+        """Play and visualize a WAV file."""
         try:
-            # Switch to the file source and provide the wav file path
             self.audio_player.switch_source('file', file_path=wav_file_path)
-            self.audio_player.start_stream()  # Start playing the audio
-            self.start_visualization()  # Start visualizing the audio data
+            self.audio_player.start_stream_safe()
+            self.start_visualization()
         except Exception as e:
             print(f"Error during audio playback and visualization: {e}")
-

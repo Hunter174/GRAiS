@@ -66,10 +66,6 @@ class AudioApp(App):
 
     def process_audio(self, instance):
         try:
-            # Disable the button to prevent interruptions during TTS and visualization
-            instance.disabled = True
-            instance.text = "Processing..."
-
             # Stop any audio input/output streams to avoid conflicts
             Clock.schedule_once(lambda dt: self.visualizer.stop_stream())
 
@@ -83,9 +79,7 @@ class AudioApp(App):
 
             # Save TTS response to a wav file
             tts_audio_path = os.path.join(os.path.dirname(__file__), 'audio', 'TTS_RESPONSE.wav')
-
-            # Save the response as a wav file using TTS
-            self.tts_widget.convert_to_wave(response)
+            self.tts_widget.convert_to_wave(response)  # Save TTS to wav file
 
             # Switch the visualizer to play and visualize the TTS audio
             Clock.schedule_once(lambda dt: self.visualizer.play_and_visualize_audio(tts_audio_path))
@@ -113,6 +107,7 @@ class AudioApp(App):
                 del self.tts_widget.tts
         except Exception as e:
             print(f"Error during cleanup: {e}")
+
 
 if __name__ == '__main__':
     app = AudioApp()
