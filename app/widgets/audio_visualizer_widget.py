@@ -1,4 +1,4 @@
-from app.logic.audio_player import AudioPlayer
+from app import AudioPlayer
 from kivy.uix.widget import Widget
 from kivy.clock import Clock
 from kivy.graphics import Line, Color

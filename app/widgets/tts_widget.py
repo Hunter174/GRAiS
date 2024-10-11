@@ -1,6 +1,6 @@
 import os
 from kivy.uix.widget import Widget
-from app.logic.text_to_speech import RealTimeTTS
+from app import RealTimeTTS
 from kivy.clock import Clock
 
 

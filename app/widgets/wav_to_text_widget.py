@@ -1,5 +1,5 @@
 from kivy.uix.widget import Widget
-from app.logic.wav_to_text import WavToText
+from app import WavToText
 
 
 class WavToTextWidget(Widget):

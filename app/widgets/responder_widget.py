@@ -1,5 +1,5 @@
 from kivy.uix.widget import Widget
-from app.logic.responder import Responder
+from app import Responder
 
 
 class ResponderWidget(Widget):
