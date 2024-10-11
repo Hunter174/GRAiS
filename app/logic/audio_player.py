@@ -1,10 +1,11 @@
 import pyaudio
 import wave
 import numpy as np
+import threading
 from kivy.clock import Clock
 
 class AudioPlayer:
-    def __init__(self, source_type='file', file_path=None, recording_filename=None, chunk_size=1024 , rate=44100):
+    def __init__(self, source_type='file', file_path=None, recording_filename=None, chunk_size=1024, rate=44100):
         self.source_type = source_type
         self.file_path = file_path
         self.recording_filename = recording_filename
@@ -108,7 +109,7 @@ class AudioPlayer:
             return np.frombuffer(data, dtype=np.int16)
         except Exception as e:
             print(f"Error reading mic data: {e}")
-            return np.zeros(self.chunk_size, dtype=np.int16)  # Return silent data in case of an error
+            return np.zeros(self.chunk_size, dtype=np.int16)
 
     def start_recording(self, filename=None):
         """Start recording from the microphone stream."""
@@ -142,7 +143,8 @@ class AudioPlayer:
         if self.recording_stream:
             self.recording_stream.close()
             self.recording_stream = None
-        Clock.unschedule(self.recording_event)
+        if self.recording_event:
+            Clock.unschedule(self.recording_event)
 
     def switch_source(self, new_source_type, file_path=None):
         """Switch between different audio sources."""

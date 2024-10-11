@@ -31,18 +31,21 @@ class AudioVisualizerWidget(Widget):
 
     def start_visualization(self):
         """Schedule visualization updates."""
+        if self.update_event:  # Prevent multiple intervals from being scheduled
+            self.stop_visualization()
         self.update_event = Clock.schedule_interval(self.update_visualization, 1 / 60.0)
-
-    def stop_stream(self):
-        """Stop visualization and audio stream."""
-        self.stop_visualization()
-        self.audio_player.stop_stream()
 
     def stop_visualization(self):
         """Unschedule visualization updates."""
         if self.update_event:
             Clock.unschedule(self.update_event)
             self.update_event = None
+        self.canvas.clear()  # Clear canvas when visualization stops
+
+    def stop_stream(self):
+        """Stop visualization and audio stream."""
+        self.stop_visualization()
+        self.audio_player.stop_stream()
 
     def update_visualization(self, dt):
         """Read audio data and update visualization."""
@@ -90,3 +93,4 @@ class AudioVisualizerWidget(Widget):
             self.start_visualization()
         except Exception as e:
             print(f"Error during audio playback and visualization: {e}")
+
