@@ -4,7 +4,7 @@ import numpy as np
 from kivy.clock import Clock
 
 class AudioPlayer:
-    def __init__(self, source_type='file', file_path=None, recording_filename=None, chunk_size=4096, rate=44100):
+    def __init__(self, source_type='file', file_path=None, recording_filename=None, chunk_size=1024 , rate=44100):
         self.source_type = source_type
         self.file_path = file_path
         self.recording_filename = recording_filename
@@ -59,11 +59,18 @@ class AudioPlayer:
 
     def stop_stream(self):
         """Stop any active stream."""
-        if self.stream is not None:
-            self.stream.stop_stream()
-            self.stream.close()
+        if self.stream is not None and self.stream.is_active():
+            try:
+                self.stream.stop_stream()
+                self.stream.close()
+                self.stream = None  # Set to None to avoid further reads
+                print("Stream stopped and closed.")
+            except Exception as e:
+                print(f"Error stopping stream: {e}")
+
         if self.wav_file:
             self.wav_file.close()
+            self.wav_file = None
 
     def start_stream(self):
         """Start stream based on current source type."""
@@ -92,13 +99,16 @@ class AudioPlayer:
     def read_mic_data(self):
         """Read data from the microphone stream."""
         try:
+            if self.stream is None or not self.stream.is_active():
+                return np.zeros(self.chunk_size, dtype=np.int16)  # Return silent data if stream is closed
+
             data = self.stream.read(self.chunk_size, exception_on_overflow=False)
             if self.recording and self.recording_stream:
                 self.recording_stream.writeframes(data)
             return np.frombuffer(data, dtype=np.int16)
         except Exception as e:
             print(f"Error reading mic data: {e}")
-            return np.zeros(self.chunk_size, dtype=np.int16)
+            return np.zeros(self.chunk_size, dtype=np.int16)  # Return silent data in case of an error
 
     def start_recording(self, filename=None):
         """Start recording from the microphone stream."""
