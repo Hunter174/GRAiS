@@ -57,8 +57,10 @@ class AudioApp(App):
             self.visualizer.stop_recording()
             instance.text = "Processing..."
 
-            # Process the audio in a separate thread to avoid blocking the UI
-            threading.Thread(target=self.process_audio, args=(instance,)).start()
+            # Process the audio in a separate daemon thread to avoid blocking the UI
+            thread = threading.Thread(target=self.process_audio, args=(instance,))
+            thread.daemon = True
+            thread.start()
         except Exception as e:
             print(f"Error stopping and processing audio: {e}")
             instance.text = "Error: Could not process audio"

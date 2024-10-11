@@ -94,3 +94,9 @@ class AudioVisualizerWidget(Widget):
         except Exception as e:
             print(f"Error during audio playback and visualization: {e}")
 
+    def terminate(self):
+        """Terminate the AudioPlayer instance."""
+        try:
+            self.audio_player.terminate()
+        except Exception as e:
+            print(f"Error terminating AudioPlayer: {e}")
