@@ -48,7 +48,7 @@ class Responder:
         for chunk in stream:
             if chunk.choices[0].delta.content:
                 response_text += chunk.choices[0].delta.content
-                print(chunk.choices[0].delta.content, end="")
+                # print(chunk.choices[0].delta.content, end="") # chunk printing for debugging
         self.history.append({"role": "assistant", "content": response_text})
 
         return response_text

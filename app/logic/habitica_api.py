@@ -44,3 +44,24 @@ class HabiticaAPI:
         except requests.RequestException as e:
             print(f"Request error: {e}")
             return None
+
+    def get_player_summary(self):
+        """Get player statis"""
+        url = f"{self.base_url}/user"  # API endpoint for fetching tasks
+        try:
+            response = requests.get(url, headers=self.headers)
+
+            # Check if the response status is OK (200)
+            if response.status_code == 200:
+                user_info = response.json()  # Parse the JSON response
+                return user_info.get("data", [])  # Return the list of todos
+            else:
+                print(f"Error: {response.status_code}, {response.json().get('message', 'No message')}")
+                return None
+        except requests.RequestException as e:
+            print(f"Request error: {e}")
+            return None
+
+if __name__ == "__main__":
+    api = HabiticaAPI()
+    api.get_player_summary()

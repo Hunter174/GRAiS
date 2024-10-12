@@ -3,6 +3,8 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.clock import Clock
+from kivy.graphics import Color, Rectangle, Line
+from kivy.core.window import Window
 from app.widgets.audio_visualizer_widget import AudioVisualizerWidget
 from app.widgets.responder_widget import ResponderWidget
 from app.widgets.tts_widget import TTSWidget
@@ -44,6 +46,14 @@ class AudioApp(App):
         layout = BoxLayout(orientation='vertical')
         visualizer_container = GridLayout(cols=1)
         information_container = GridLayout(cols=2)
+
+        # Add background color using canvas before # Shouldnt this be in the initialize?
+        with layout.canvas.before:
+            Color(0.1, 0.1, 0.1, 1)  # Dark gray background (r, g, b, a)
+            self.rect = Rectangle(size=Window.size, pos=layout.pos)  # Use Window.size for background size
+
+        # Bind the size and position to update background on resize
+        layout.bind(size=self.update_rect, pos=self.update_rect)
 
         #Add to the visualizer widget
         visualizer_container.add_widget(self.visualizer)
@@ -92,6 +102,12 @@ class AudioApp(App):
 
             # Convert recorded audio to text
             transcribed_text = self.wav_to_text_widget.convert()
+
+            # Check to ensure that audio was captured
+            if transcribed_text is None:
+                transcribed_text = ("Audio to Text processing error. Please respond to this message"
+                        "Telling me that the audio to text processing failed.")
+
             print(f"Transcribed Text: {transcribed_text}")
 
             # Use Responder to generate a response
@@ -116,6 +132,11 @@ class AudioApp(App):
         """Re-enable the button after TTS and visualization have completed."""
         instance.text = "Press and Hold to Record"
         instance.disabled = False
+
+    def update_rect(self, instance, value):
+        """Update the background rectangle size when the window resizes"""
+        self.rect.pos = instance.pos
+        self.rect.size = instance.size
 
     def on_stop(self):
         """Clean up resources when the app is stopped."""

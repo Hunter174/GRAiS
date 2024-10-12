@@ -11,7 +11,7 @@ class WavToText:
                 audio_data = self.recognizer.record(source)
                 return self.recognizer.recognize_google(audio_data)
         except sr.UnknownValueError:
-            return "Speech not recognized"
+            return None
         except sr.RequestError as e:
             return f"API error: {e}"
         except FileNotFoundError:
