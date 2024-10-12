@@ -14,6 +14,10 @@ class GoogleWidget(BoxLayout):
         # Create a horizontal layout for the top buttons
         top_button_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), spacing=10)
 
+        # Notification label at the top
+        self.notification_label = Label(text="No Notifications", size_hint=(1, 0.1))
+        self.add_widget(self.notification_label)
+
         self.record_button = Button(text="Press and Hold to Record")
         self.auth_button = Button(text="Authorize Google Account")
         top_button_layout.add_widget(self.record_button)
@@ -43,8 +47,3 @@ class GoogleWidget(BoxLayout):
         bottom_button_layout.add_widget(self.event_button)
 
         self.add_widget(bottom_button_layout)
-
-        # Notification label at the bottom
-        self.notification_label = Label(text="No Notifications", size_hint=(1, 0.1))
-        self.add_widget(self.notification_label)
-
