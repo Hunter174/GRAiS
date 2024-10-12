@@ -1,22 +1,25 @@
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.clock import Clock
 from app.widgets.audio_visualizer_widget import AudioVisualizerWidget
 from app.widgets.responder_widget import ResponderWidget
 from app.widgets.tts_widget import TTSWidget
 from app.widgets.wav_to_text_widget import WavToTextWidget
+from app.widgets.habitica_widget import HabiticaWidget
+from app.widgets.google_manager_widget import GoogleWidget
 import os
 import threading
 
 class AudioApp(App):
-    def build(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
         # Define the base directory for audio files
         audio_dir = os.path.join(os.path.dirname(__file__), 'audio')
         self.file_path = os.path.join(audio_dir, 'GRAiS_AUDIO.wav')
         self.recorded_file_path = os.path.join(audio_dir, 'USER_AUDIO.wav')
-
-        layout = BoxLayout(orientation='vertical')
 
         # Instantiate the audio player and visualizer with proper file paths
         self.visualizer = AudioVisualizerWidget(file_path=self.file_path, recorded_file_path=self.recorded_file_path)
@@ -25,6 +28,8 @@ class AudioApp(App):
         self.responder_widget = ResponderWidget()
         self.tts_widget = TTSWidget()
         self.wav_to_text_widget = WavToTextWidget(file_path=self.recorded_file_path)
+        self.google_widget = GoogleWidget()
+        self.habitica_widget = HabiticaWidget()
 
         # Initialize with Greeting
         self.visualizer.start_visualization()
@@ -34,9 +39,23 @@ class AudioApp(App):
         self.record_button.bind(on_press=self.start_recording)
         self.record_button.bind(on_release=self.stop_and_process_audio)
 
+    def build(self):
+
+        layout = BoxLayout(orientation='vertical')
+        visualizer_container = GridLayout(cols=1)
+        information_container = GridLayout(cols=2)
+
+        #Add to the visualizer widget
+        visualizer_container.add_widget(self.visualizer)
+        visualizer_container.add_widget(self.record_button)
+
+        #Add to the summary info container
+        information_container.add_widget(self.google_widget)
+        information_container.add_widget(self.habitica_widget)
+
         # Add widgets and buttons to the layout
-        layout.add_widget(self.visualizer)
-        layout.add_widget(self.record_button)
+        layout.add_widget(information_container)
+        layout.add_widget(visualizer_container)
 
         return layout
 

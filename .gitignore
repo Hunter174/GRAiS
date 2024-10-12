@@ -53,3 +53,7 @@ dist/
 # Ignore database files
 *.sqlite3
 *.db
+
+
+# Ignore important files
+credentials.json
