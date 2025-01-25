@@ -6,7 +6,6 @@ import threading
 from app.logic.habitica_api import HabiticaAPI
 from app.widgets.base_widget import BaseWidget
 
-
 class HabiticaWidget(BaseWidget):
     def __init__(self, **kwargs):
         super(HabiticaWidget, self).__init__(**kwargs)
@@ -19,13 +18,14 @@ class HabiticaWidget(BaseWidget):
         self.todos_layout.bind(minimum_height=self.todos_layout.setter('height'))
 
         # ScrollView for todos
-        self.todos_scroll_view = ScrollView(size_hint=(None, None), pos=(10, 10), size=(200, 300))
+        self.todos_scroll_view = ScrollView(size_hint=(1, None), size=(200, 300))  # Set size_hint for ScrollView
         self.todos_scroll_view.add_widget(self.todos_layout)
 
         self.add_widget(self.todos_scroll_view)
 
         # Notification label
-        self.notification_label = Label(text="Fetching todos...", size_hint=(None, None), pos=(10, 320))
+        self.notification_label = Label(text="Fetching todos...", size_hint=(1, None), height=40)
+        self.notification_label.halign = "center"  # Center the text horizontally
         self.add_widget(self.notification_label)
 
         # Start background thread to fetch todos

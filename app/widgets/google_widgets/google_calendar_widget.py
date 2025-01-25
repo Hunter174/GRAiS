@@ -8,19 +8,31 @@ import datetime
 import os
 from app.widgets.base_widget import BaseWidget
 
-
 class GoogleWidget(BaseWidget):
     def __init__(self, **kwargs):
         super(GoogleWidget, self).__init__(**kwargs)
 
+        # Not sure why I am having issues formatting the label
 
-        self.layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), spacing=10)
+        # Layout configuration
+        self.layout = BoxLayout(orientation='horizontal', size_hint=(1, None), height=1000, spacing=10)
+        self.layout.size_hint_y = None  # Ensure BoxLayout doesn't shrink vertically
 
         # Create notification label
-        self.notification_label = Label(text="Initializing...", size_hint=(None, None), pos=(10, 10))
+        self.label = Label(
+            text="Initializing...",
+            size_hint=(None, None),
+            size=(1000, 1000),  # Set size as needed
+            halign="center",  # Center the text horizontally
+            valign="middle",  # Center the text vertically
+        )
 
-        self.layout.add_widget(self.notification_label)
+        self.label.y +=100
 
+        # Add the label to the layout
+        self.layout.add_widget(self.label)
+
+        # Add layout to the widget
         self.add_widget(self.layout)
 
         # Initialize Google API credentials in a separate thread
@@ -30,7 +42,7 @@ class GoogleWidget(BaseWidget):
     def _initialize_creds(self):
         """Handles OAuth2.0 Authorization and initializes credentials."""
         scopes = ['https://www.googleapis.com/auth/calendar.readonly']
-        credentials_path = os.path.join(os.path.dirname(__file__), '..', '..', 'credentials.json')
+        credentials_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'credentials.json')
         flow = InstalledAppFlow.from_client_secrets_file(credentials_path, scopes=scopes)
         try:
             self.creds = flow.run_local_server(port=8080)
@@ -40,12 +52,12 @@ class GoogleWidget(BaseWidget):
 
     def _post_authorization(self, dt):
         """Fetches calendar events for the current week and updates the UI."""
-        self.notification_label.text = 'Fetching events for this week...'
+        self.label.text = 'Fetching events for this week...'
         events = self.get_current_week_events()
         if events:
             self.display_events(events)
         else:
-            self.notification_label.text = 'No events found for this week.'
+            self.label.text = 'No events found for this week.'
 
     def get_current_week_events(self):
         """Fetches upcoming events from Google Calendar for the current week."""
@@ -78,4 +90,4 @@ class GoogleWidget(BaseWidget):
                 summary = event['summary']
                 formatted_events.append(f"  {event_start_time} - {summary}")
 
-        self.notification_label.text = '\n'.join(formatted_events)
+        self.label.text = '\n'.join(formatted_events)
