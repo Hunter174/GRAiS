@@ -1,7 +1,7 @@
 from app import AudioPlayer
 from kivy.uix.widget import Widget
 from kivy.clock import Clock
-from kivy.graphics import Line, Color
+from kivy.graphics import Line, Color, Rectangle
 import numpy as np
 
 class AudioVisualizerWidget(Widget):
@@ -11,6 +11,26 @@ class AudioVisualizerWidget(Widget):
         self.recorded_file_path = recorded_file_path
         self.audio_player = AudioPlayer(source_type='file', file_path=self.file_path, recording_filename=self.recorded_file_path)
         self.update_event = None
+
+    def _initialize_background(self):
+        """Set the background color and add a gray outline."""
+        with self.canvas.before:
+            # Set the background color
+            Color(0.8, 0.8, 0.8, 1)  # Light gray background (r, g, b, a)
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+            # Add the gray outline
+            Color(1, 0.5, 0.5, 1)  # Gray outline color
+            self.outline = Line(rectangle=(*self.pos, *self.size), width=2)
+
+        # Bind size and position to update the background and outline when resized
+        self.bind(size=self._update_canvas, pos=self._update_canvas)
+
+    def _update_canvas(self, *args):
+        """Update the background rectangle and outline on resize or reposition."""
+        self.rect.size = self.size
+        self.rect.pos = self.pos
+        self.outline.rectangle = (*self.pos, *self.size)
 
     def start_recording(self, filename=None):
         """Start recording through the AudioPlayer and begin visualization."""
@@ -57,7 +77,7 @@ class AudioVisualizerWidget(Widget):
             return
 
         # Scale and offset data for visualization
-        scaling_factor = 0.01
+        scaling_factor = 0.001
         offset = 128
         scaled_data = data_int * scaling_factor + offset
         data_clipped = np.clip(scaled_data, 0, 255)

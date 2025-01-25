@@ -3,14 +3,17 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.clock import Clock
-from kivy.graphics import Color, Rectangle, Line
-from kivy.core.window import Window
-from app.widgets.audio_visualizer_widget import AudioVisualizerWidget
-from app.widgets.responder_widget import ResponderWidget
-from app.widgets.tts_widget import TTSWidget
-from app.widgets.wav_to_text_widget import WavToTextWidget
-from app.widgets.habitica_widget import HabiticaWidget
-from app.widgets.google_manager_widget import GoogleWidget
+
+# Import Necessary Logic
+from app.widgets.utility_widgets.audio_visualizer_widget import AudioVisualizerWidget
+from app.widgets.habitica_widgets.habitica_widget import HabiticaWidget
+from app.widgets.google_widgets.google_calendar_widget import GoogleWidget
+
+# Import the logic
+from app.logic.responder import Responder
+from app.logic.text_to_speech import RealTimeTTS
+from app.logic.wav_to_text import WavToText
+
 import os
 import threading
 
@@ -24,14 +27,16 @@ class AudioApp(App):
         self.recorded_file_path = os.path.join(audio_dir, 'USER_AUDIO.wav')
 
         # Instantiate the audio player and visualizer with proper file paths
-        self.visualizer = AudioVisualizerWidget(file_path=self.file_path, recorded_file_path=self.recorded_file_path)
+        self.visualizer = AudioVisualizerWidget(self.file_path, self.recorded_file_path)
 
-        # Instantiate Responder, TTS, and WavToText widgets
-        self.responder_widget = ResponderWidget()
-        self.tts_widget = TTSWidget()
-        self.wav_to_text_widget = WavToTextWidget(file_path=self.recorded_file_path)
+        # Instantiate Widgets
         self.google_widget = GoogleWidget()
         self.habitica_widget = HabiticaWidget()
+
+        # Initiate Logic utility
+        self.responder = Responder()
+        self.tts = RealTimeTTS()
+        self.wav_to_text = WavToText(self.recorded_file_path)
 
         # Initialize with Greeting
         self.visualizer.start_visualization()
@@ -46,14 +51,6 @@ class AudioApp(App):
         layout = BoxLayout(orientation='vertical')
         visualizer_container = GridLayout(cols=1)
         information_container = GridLayout(cols=2)
-
-        # Add background color using canvas before # Shouldnt this be in the initialize?
-        with layout.canvas.before:
-            Color(0.1, 0.1, 0.1, 1)  # Dark gray background (r, g, b, a)
-            self.rect = Rectangle(size=Window.size, pos=layout.pos)  # Use Window.size for background size
-
-        # Bind the size and position to update background on resize
-        layout.bind(size=self.update_rect, pos=self.update_rect)
 
         #Add to the visualizer widget
         visualizer_container.add_widget(self.visualizer)
@@ -101,7 +98,7 @@ class AudioApp(App):
             Clock.schedule_once(lambda dt: self.visualizer.stop_stream())
 
             # Convert recorded audio to text
-            transcribed_text = self.wav_to_text_widget.convert()
+            transcribed_text = self.wav_to_text.convert_to_text()
 
             # Check to ensure that audio was captured
             if transcribed_text is None:
@@ -111,12 +108,12 @@ class AudioApp(App):
             print(f"Transcribed Text: {transcribed_text}")
 
             # Use Responder to generate a response
-            response = self.responder_widget.respond(transcribed_text)
+            response = self.responder.respond(transcribed_text)
             print(f"Generated Response: {response}")
 
             # Save TTS response to a wav file
             tts_audio_path = os.path.join(os.path.dirname(__file__), 'audio', 'TTS_RESPONSE.wav')
-            self.tts_widget.convert_to_wave(response)  # Save TTS to wav file
+            self.tts.convert_to_wave(response)  # Save TTS to wav file
 
             # Switch the visualizer to play and visualize the TTS audio
             Clock.schedule_once(lambda dt: self.visualizer.play_and_visualize_audio(tts_audio_path))
@@ -133,11 +130,6 @@ class AudioApp(App):
         instance.text = "Press and Hold to Record"
         instance.disabled = False
 
-    def update_rect(self, instance, value):
-        """Update the background rectangle size when the window resizes"""
-        self.rect.pos = instance.pos
-        self.rect.size = instance.size
-
     def on_stop(self):
         """Clean up resources when the app is stopped."""
         try:
@@ -145,8 +137,7 @@ class AudioApp(App):
             self.visualizer.terminate()  # Terminate PyAudio safely
 
             # Ensure pyttsx3 engine is cleaned up
-            if hasattr(self.tts_widget, 'tts'):
-                del self.tts_widget.tts
+            del self.tts
         except Exception as e:
             print(f"Error during cleanup: {e}")
 
