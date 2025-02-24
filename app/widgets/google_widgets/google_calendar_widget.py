@@ -12,22 +12,17 @@ class GoogleWidget(BaseWidget):
     def __init__(self, **kwargs):
         super(GoogleWidget, self).__init__(**kwargs)
 
-        # Not sure why I am having issues formatting the label
-
         # Layout configuration
-        self.layout = BoxLayout(orientation='horizontal', size_hint=(1, None), height=1000, spacing=10)
-        self.layout.size_hint_y = None  # Ensure BoxLayout doesn't shrink vertically
+        self.layout = BoxLayout(orientation='vertical', size_hint=(1, 1), height=200, spacing=1)
 
-        # Create notification label
+        # Corrected label with proper alignment
         self.label = Label(
             text="Initializing...",
-            size_hint=(None, None),
-            size=(1000, 1000),  # Set size as needed
+            size_hint=(1, 1),
+            size=(100, 100),  # Set size as needed
             halign="center",  # Center the text horizontally
             valign="middle",  # Center the text vertically
         )
-
-        self.label.y +=100
 
         # Add the label to the layout
         self.layout.add_widget(self.label)
