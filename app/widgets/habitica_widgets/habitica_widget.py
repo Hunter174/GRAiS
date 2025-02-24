@@ -1,6 +1,7 @@
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
 import threading
 from app.logic.habitica_api import HabiticaAPI
@@ -13,15 +14,12 @@ class HabiticaWidget(BaseWidget):
         # Initialize Habitica API
         self.habitica_api = HabiticaAPI()
 
-        # Create scrollable layout for todos
-        self.todos_layout = GridLayout(cols=1, spacing=5, size_hint_y=None)
-        self.todos_layout.bind(minimum_height=self.todos_layout.setter('height'))
-
-        # ScrollView for todos
-        self.todos_scroll_view = ScrollView(size_hint=(1, 1))
-        self.todos_scroll_view.add_widget(self.todos_layout)
-
-        self.add_widget(self.todos_scroll_view)
+        self.outer_layout = BoxLayout(
+            orientation="vertical",
+            padding=[20, 100, 20, 20],
+            spacing=10,
+            size_hint=(1, 1)
+        )
 
         # Notification label
         self.notification_label = Label(
@@ -30,7 +28,19 @@ class HabiticaWidget(BaseWidget):
             height=40,
             halign="center",
         )
-        self.add_widget(self.notification_label)
+        self.outer_layout.add_widget(self.notification_label)
+
+        # Create scrollable layout for todos
+        self.todos_layout = GridLayout(cols=1, spacing=5, size_hint_y=None)
+        self.todos_layout.bind(minimum_height=self.todos_layout.setter('height'))
+
+        # ScrollView for todos
+        self.todos_scroll_view = ScrollView(size_hint=(1, 1))
+        self.todos_scroll_view.add_widget(self.todos_layout)
+
+        self.outer_layout.add_widget(self.todos_scroll_view)
+
+        self.add_widget(self.outer_layout)
 
         # Start background thread to fetch todos
         threading.Thread(target=self.fetch_todos, daemon=True).start()
@@ -50,7 +60,7 @@ class HabiticaWidget(BaseWidget):
                 size_hint_y=None,
                 height=40,
                 valign="middle",
-                halign = "center"
+                halign="center"
             )
             self.todos_layout.add_widget(label)
 
