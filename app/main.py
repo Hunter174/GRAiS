@@ -3,6 +3,7 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.clock import Clock
+from kivy.core.window import Window
 
 # Import Necessary Logic
 from app.widgets.utility_widgets.audio_visualizer_widget import AudioVisualizerWidget
@@ -46,17 +47,19 @@ class AudioApp(App):
         self.record_button.bind(on_press=self.start_recording)
         self.record_button.bind(on_release=self.stop_and_process_audio)
 
-    def build(self):
+        # Bind the application quit event to handle cleanup
+        Window.bind(on_request_close=self.quit_app)
 
+    def build(self):
         layout = BoxLayout(orientation='vertical')
         visualizer_container = GridLayout(cols=1)
         information_container = GridLayout(cols=2)
 
-        #Add to the visualizer widget
+        # Add to the visualizer widget
         visualizer_container.add_widget(self.visualizer)
         visualizer_container.add_widget(self.record_button)
 
-        #Add to the summary info container
+        # Add to the summary info container
         information_container.add_widget(self.google_widget)
         information_container.add_widget(self.habitica_widget)
 
@@ -78,15 +81,15 @@ class AudioApp(App):
     def stop_and_process_audio(self, instance):
         """Stop recording when the button is released and process the audio."""
         try:
-            # Disable the button to prevent interruptions during TTS and visualization
             instance.disabled = True
             self.visualizer.stop_recording()
             instance.text = "Processing..."
 
             # Process the audio in a separate daemon thread to avoid blocking the UI
             thread = threading.Thread(target=self.process_audio, args=(instance,))
-            thread.daemon = True
             thread.start()
+            thread.join()
+
         except Exception as e:
             print(f"Error stopping and processing audio: {e}")
             instance.text = "Error: Could not process audio"
@@ -94,32 +97,25 @@ class AudioApp(App):
 
     def process_audio(self, instance):
         try:
-            # Stop any audio input/output streams to avoid conflicts
             Clock.schedule_once(lambda dt: self.visualizer.stop_stream())
 
-            # Convert recorded audio to text
             transcribed_text = self.wav_to_text.convert_to_text()
 
-            # Check to ensure that audio was captured
             if transcribed_text is None:
                 transcribed_text = ("Audio to Text processing error. Please respond to this message"
-                        "Telling me that the audio to text processing failed.")
+                                    "Telling me that the audio to text processing failed.")
 
             print(f"Transcribed Text: {transcribed_text}")
 
-            # Use Responder to generate a response
             response = self.responder.respond(transcribed_text)
             print(f"Generated Response: {response}")
 
-            # Save TTS response to a wav file
             tts_audio_path = os.path.join(os.path.dirname(__file__), 'audio', 'TTS_RESPONSE.wav')
-            self.tts.convert_to_wave(response)  # Save TTS to wav file
+            self.tts.convert_to_wave(response)
 
-            # Switch the visualizer to play and visualize the TTS audio
             Clock.schedule_once(lambda dt: self.visualizer.play_and_visualize_audio(tts_audio_path))
 
-            # After playback is finished, re-enable the button
-            Clock.schedule_once(lambda dt: self.enable_button(instance), 5)  # Adjust timing based on TTS duration
+            Clock.schedule_once(lambda dt: self.enable_button(instance), 5)
 
         except Exception as e:
             print(f"Error in processing audio: {e}")
@@ -130,18 +126,35 @@ class AudioApp(App):
         instance.text = "Press and Hold to Record"
         instance.disabled = False
 
-    def on_stop(self):
-        """Clean up resources when the app is stopped."""
+    def quit_app(self, *args):
+        """Handles app closing via the window's X button or programmatically."""
+        print("Closing application...")
+
         try:
-            self.visualizer.stop_stream()
-            self.visualizer.terminate()  # Terminate PyAudio safely
+            if hasattr(self.visualizer, "stop_stream"):
+                self.visualizer.stop_stream()
 
-            # Ensure pyttsx3 engine is cleaned up
-            del self.tts
+            if hasattr(self.visualizer, "terminate"):
+                self.visualizer.terminate()
+
+            if hasattr(self.google_widget, "creds") and self.google_widget.creds is not None:
+                self.google_widget.creds = None
+
+            if hasattr(self, "tts"):
+                del self.tts
+
+            print("Cleanup complete. Exiting application.")
+
         except Exception as e:
-            print(f"Error during cleanup: {e}")
+            print(f"Cleanup failed: {e}")
 
+        return False
 
 if __name__ == '__main__':
-    app = AudioApp()
-    app.run()
+    try:
+        app = AudioApp()
+        app.run()
+    except KeyboardInterrupt:
+        print("\nProgram interrupted. Exiting gracefully.")
+    finally:
+        print("Cleanup finished. Goodbye!")
