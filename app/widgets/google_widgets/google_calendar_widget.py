@@ -85,4 +85,8 @@ class GoogleWidget(BaseWidget):
                 summary = event['summary']
                 formatted_events.append(f"  {event_start_time} - {summary}")
 
-        self.label.text = '\n'.join(formatted_events)
+        if len(formatted_events) == 0:
+            self.label.text = f"Nothing Scheduled for Today: {day_of_week}, {month_day}"
+
+        else:
+            self.label.text = '\n'.join(formatted_events)
