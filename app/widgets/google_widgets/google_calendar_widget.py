@@ -5,8 +5,12 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 import threading
 import datetime
+import pytz
 import os
 from app.widgets.base_widget import BaseWidget
+
+# Set the localization (hard coded for now)
+MST = pytz.timezone('America/Denver')
 
 class GoogleWidget(BaseWidget):
     def __init__(self, **kwargs):
@@ -57,24 +61,42 @@ class GoogleWidget(BaseWidget):
     def get_current_week_events(self):
         """Fetches upcoming events from Google Calendar for the current week."""
         service = build('calendar', 'v3', credentials=self.creds)
-        today = datetime.datetime.utcnow()
-        start_of_week = today - datetime.timedelta(days=today.weekday())  # Monday
-        end_of_week = start_of_week + datetime.timedelta(days=6)  # Sunday
-        time_min = start_of_week.isoformat() + 'Z'
-        time_max = end_of_week.isoformat() + 'Z'
-        events_result = service.events().list(calendarId='primary', timeMin=time_min,
-                                              timeMax=time_max, singleEvents=True,
-                                              orderBy='startTime').execute()
+
+        today = datetime.datetime.now(MST).date()
+        start_of_week = datetime.datetime.combine(today - datetime.timedelta(days=today.weekday()),
+                                                  datetime.datetime.min.time(), MST)
+        end_of_week = datetime.datetime.combine(start_of_week.date() + datetime.timedelta(days=6),
+                                                datetime.datetime.max.time(), MST)
+
+        # Convert to UTC for API request
+        start_of_week_utc = start_of_week.astimezone(pytz.utc).isoformat()
+        end_of_week_utc = end_of_week.astimezone(pytz.utc).isoformat()
+
+        # Debugging output
+        print(f"Requesting events from {start_of_week_utc} to {end_of_week_utc}")
+
+        events_result = service.events().list(
+            calendarId='primary',
+            timeMin=start_of_week_utc,
+            timeMax=end_of_week_utc,
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+
         return events_result.get('items', [])
 
     def display_events(self, events):
         """Formats and displays events in the UI."""
         formatted_events = []
-        today = datetime.datetime.utcnow().date()
+        today = datetime.datetime.now(MST).date()
 
         for event in events:
-            event_date = datetime.datetime.fromisoformat(
-                event['start'].get('dateTime', event['start'].get('date')).rstrip('Z'))
+            event_datetime_utc = datetime.datetime.fromisoformat(
+                event['start'].get('dateTime', event['start'].get('date')).replace('Z', '')
+            ).replace(tzinfo=pytz.utc)
+
+            event_date = event_datetime_utc.astimezone(MST)
+
             date = event_date.date()
             event_start_time = event_date.strftime('%H:%M')
             day_of_week = event_date.strftime('%A')
@@ -85,4 +107,7 @@ class GoogleWidget(BaseWidget):
                 summary = event['summary']
                 formatted_events.append(f"  {event_start_time} - {summary}")
 
-        self.label.text = '\n'.join(formatted_events)
+        if not formatted_events:
+            self.label.text = f"Nothing Scheduled for Today: {today.strftime('%A')}, {today.strftime('%B %d')}"
+        else:
+            self.label.text = '\n'.join(formatted_events)
