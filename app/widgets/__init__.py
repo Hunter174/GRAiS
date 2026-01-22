@@ -1,1 +1,0 @@
-from app.widgets.utility_widgets.audio_visualizer_widget import AudioVisualizerWidget
