@@ -1,0 +1,4 @@
+from .internet import TOOLS as INTERNET_TOOLS
+
+TOOLS = []
+TOOLS += INTERNET_TOOLS
