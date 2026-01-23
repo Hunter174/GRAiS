@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Iterable, Optional, Any
 from langchain.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class GraisAgent(ABC):
     """
@@ -36,6 +40,8 @@ class GraisAgent(ABC):
             for call in response.tool_calls:
                 tool = tool_map[call["name"]]
                 result = tool.invoke(call["args"])
+                logger.debug(tool.name)
+                logger.debug(result)
 
                 tool_messages.append(
                     ToolMessage(

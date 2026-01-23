@@ -4,6 +4,6 @@ from core.tools.registry import get_tools
 tools = get_tools("system", "web")
 agent = BT7274Agent(tools=tools)
 
-out = agent.run("Hello BT! how are you?")
+out = agent.run("can you give me a summary of color theory")
 
 print(out.content)

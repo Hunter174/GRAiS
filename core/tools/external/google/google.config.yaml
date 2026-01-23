@@ -1,0 +1,9 @@
+google:
+  application_name: "GRAiS"
+  credentials_file: "credentials.json"
+  token_file: "~/.config/grais/google_token.json"
+
+  scopes:
+    all:
+      - https://www.googleapis.com/auth/gmail.readonly
+      - https://www.googleapis.com/auth/calendar.readonly

@@ -55,7 +55,7 @@ class PersonaCompiler:
 
         # Style examples
         if "examples" in persona:
-            lines.append("Style reference examples (do not quote verbatim):")
+            lines.append("Style reference examples (do not quote verbatim unless appropriate):")
             for ex in persona["examples"]:
                 # support both raw strings and structured examples
                 if isinstance(ex, dict):

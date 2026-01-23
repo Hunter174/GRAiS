@@ -2,12 +2,14 @@ from core.tools.system import TOOLS as SYSTEM_TOOLS
 from core.tools.web import TOOLS as WEB_TOOLS
 from core.tools.data import TOOLS as DATA_TOOLS
 from core.tools.external import TOOLS as EXTERNAL_TOOLS
+from core.tools.external.google import TOOLS as GOOGLE_TOOLS
 
 ALL_TOOLS = (
     SYSTEM_TOOLS
     + WEB_TOOLS
     + DATA_TOOLS
     + EXTERNAL_TOOLS
+    + GOOGLE_TOOLS
 )
 
 def get_tools(*groups: str):
