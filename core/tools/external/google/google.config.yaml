@@ -4,6 +4,12 @@ google:
   token_file: "~/.config/grais/google_token.json"
 
   scopes:
-    all:
+    gmail:
       - https://www.googleapis.com/auth/gmail.readonly
-      - https://www.googleapis.com/auth/calendar.readonly
+      - https://www.googleapis.com/auth/gmail.send
+
+    calendar:
+      - https://www.googleapis.com/auth/calendar
+
+    drive: # To be added later
+      - https://www.googleapis.com/auth/drive.readonly

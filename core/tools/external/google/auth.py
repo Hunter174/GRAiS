@@ -8,6 +8,11 @@ def get_credentials(credentials_file, token_file, scopes):
     if token_file.exists():
         creds = Credentials.from_authorized_user_file(str(token_file), scopes)
 
+    if creds and creds.scopes:
+        missing = set(scopes) - set(creds.scopes)
+        if missing:
+            raise RuntimeError(f"OAuth token missing required scopes: {missing}")
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
