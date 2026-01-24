@@ -1,8 +1,7 @@
 from langchain.tools import tool
 from googleapiclient.discovery import build
-
-from .auth import get_credentials
-from .config import GoogleConfig
+from core.tools.external.google.auth import get_credentials
+from core.tools.external.google.config import GoogleConfig
 
 CONFIG = GoogleConfig("google.config.yaml")
 
