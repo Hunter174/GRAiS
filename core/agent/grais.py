@@ -1,10 +1,11 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Iterable, Optional, Any
 from langchain.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
+from core.tts.infer import TextToSpeech
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+
 
 class GraisAgent(ABC):
     """
@@ -13,17 +14,20 @@ class GraisAgent(ABC):
 
     name: str = "base"
     description: str = ""
-    system_prompt: str = ""
 
     def __init__(
-        self,
-        llm: Any,
+        self, llm: Any,
+        system_prompt: str,
+        tts_model_id: Optional[str] = None,
         tools: Optional[Iterable[Any]] = None,
         streaming: bool = False,
     ):
         self.llm = llm
+        self.system_prompt = system_prompt
         self.tools = list(tools) if tools else []
         self.streaming = streaming
+
+        self.tts = TextToSpeech(tts_model_id) if tts_model_id else None
 
     def run(self, user_input: str):
         messages = [
@@ -35,13 +39,14 @@ class GraisAgent(ABC):
 
         if isinstance(response, AIMessage) and response.tool_calls:
             tool_map = {tool.name: tool for tool in self.tools}
-
             tool_messages = []
+
             for call in response.tool_calls:
                 tool = tool_map[call["name"]]
                 result = tool.invoke(call["args"])
-                logger.debug(tool.name)
-                logger.debug(result)
+
+                logger.debug("Tool call: %s", tool.name)
+                logger.debug("Result: %s", result)
 
                 tool_messages.append(
                     ToolMessage(
@@ -50,8 +55,11 @@ class GraisAgent(ABC):
                     )
                 )
 
-            # Send tool output back to the LLM
             messages.extend([response, *tool_messages])
-            return self.llm.invoke(messages)
+            response = self.llm.invoke(messages)
+
+        # TTS (only if configured)
+        if self.tts and isinstance(response, AIMessage):
+            self.tts.speak(response.content)
 
         return response

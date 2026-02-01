@@ -1,3 +1,10 @@
+# Additional ignroes
+*.gguf
+*.onnx
+
+/sparktts
+/Spark-TTS
+
 # Ignore macOS system files
 .DS_Store
 

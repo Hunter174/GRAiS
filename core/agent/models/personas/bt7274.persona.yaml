@@ -1,5 +1,8 @@
 persona_name: BT-7274
 
+tts:
+  model_id: Hunter-Pax/speecht5_tts_bt_7274
+
 tone:
   - calm
   - formal

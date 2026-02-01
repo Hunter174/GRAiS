@@ -1,3 +1,17 @@
 langchain
 langchain_ollama
 wikipedia
+torch
+torchaudio
+unsloth
+numpy
+soundfile
+librosa
+sentencepiece
+transformers
+accelerate
+omegaconf
+einx
+torchcodec
+soxr
+llama-cpp-python

@@ -11,6 +11,10 @@ class PersonaCompiler:
             return yaml.safe_load(f)
 
     @staticmethod
+    def get_tts_model_id(persona: dict) -> str | None:
+        return persona.get("tts", {}).get("model_id")
+
+    @staticmethod
     def compile_system_prompt(persona: dict) -> str:
         lines = []
 
