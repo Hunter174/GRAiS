@@ -51,7 +51,6 @@
                 {% endfor %}
             </select>
         </label>
-
         <label>
             Tools:
             <select id="tools">
@@ -59,6 +58,10 @@
                     <option value="{{ t }}">{{ t }}</option>
                 {% endfor %}
             </select>
+        </label>
+        <label>
+            <input type="checkbox" id="enable_tts">
+            Enable TTS
         </label>
     </div>
 
@@ -70,12 +73,13 @@
         onkeydown="handleKey(event)"
     ></textarea>
     <button onclick="send()">Send</button>
+    <button onclick="resetChat()">Reset</button>
 </div>
 
 <script>
 function handleKey(event) {
     if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault(); // prevent newline
+        event.preventDefault();
         send();
     }
 }
@@ -89,6 +93,7 @@ async function send() {
 
     const persona = document.getElementById("persona").value;
     const tools = document.getElementById("tools").value;
+    const enable_tts = document.getElementById("enable_tts").checked;
 
     log.innerHTML += `<div class="msg user">You: ${text}</div>`;
     input.value = "";
@@ -100,6 +105,7 @@ async function send() {
             message: text,
             persona: persona,
             tools: tools,
+            enable_tts: enable_tts,
         })
     });
 
@@ -110,6 +116,11 @@ async function send() {
     } else {
         log.innerHTML += `<div class="msg bot">${persona}: ${data.response}</div>`;
     }
+}
+
+async function resetChat() {
+    await fetch("/chat/reset/", { method: "POST" });
+    location.reload();
 }
 </script>
 </body>
