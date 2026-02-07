@@ -31,10 +31,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import path, include
+from web.chat.views import home_page
 
 urlpatterns = [
-    path("", include("chat.urls")),
+    path("", home_page, name="home"),
+    path("chat/", include("chat.urls")),
     path("admin/", admin.site.urls),
 ]
 

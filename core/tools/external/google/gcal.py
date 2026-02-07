@@ -79,14 +79,3 @@ def create_calendar_event(title: str, start_iso: str, end_iso: str, description:
 
     start = event["start"].get("dateTime", event["start"].get("date"))
     return f"Event created: {event['summary']} @ {start}"
-
-# if __name__ == "__main__":
-#     print(
-#         create_calendar_event(
-#             title="GRAiS Architecture Review",
-#             start_iso="2026-01-25T14:00:00",
-#             end_iso="2026-01-25T15:00:00",
-#             description="Manual test event",
-#             timezone_str="America/Los_Angeles",
-#         )
-#     )

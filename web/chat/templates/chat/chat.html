@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Agent Chat</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #111;
+            color: #0f0;
+        }
+        #chat {
+            max-width: 800px;
+            margin: auto;
+        }
+        textarea {
+            width: 100%;
+            background: #000;
+            color: #0f0;
+        }
+        select, button {
+            margin-top: 10px;
+            background: #000;
+            color: #0f0;
+            border: 1px solid #0f0;
+        }
+        .msg {
+            margin: 10px 0;
+        }
+        .user {
+            color: #6cf;
+        }
+        .bot {
+            color: #0f0;
+        }
+        .controls {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chat">
+    <h2>Tactical Agent Interface</h2>
+
+    <div class="controls">
+        <label>
+            Persona:
+            <select id="persona">
+                {% for p in personas %}
+                    <option value="{{ p }}">{{ p }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label>
+            Tools:
+            <select id="tools">
+                {% for t in tool_sets %}
+                    <option value="{{ t }}">{{ t }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </div>
+
+    <div id="log"></div>
+
+    <textarea
+        id="input"
+        rows="3"
+        onkeydown="handleKey(event)"
+    ></textarea>
+    <button onclick="send()">Send</button>
+</div>
+
+<script>
+function handleKey(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault(); // prevent newline
+        send();
+    }
+}
+
+async function send() {
+    const input = document.getElementById("input");
+    const log = document.getElementById("log");
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    const persona = document.getElementById("persona").value;
+    const tools = document.getElementById("tools").value;
+
+    log.innerHTML += `<div class="msg user">You: ${text}</div>`;
+    input.value = "";
+
+    const res = await fetch("api/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            message: text,
+            persona: persona,
+            tools: tools,
+        })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+        log.innerHTML += `<div class="msg bot">Error: ${data.error}</div>`;
+    } else {
+        log.innerHTML += `<div class="msg bot">${persona}: ${data.response}</div>`;
+    }
+}
+</script>
+</body>
+</html>
