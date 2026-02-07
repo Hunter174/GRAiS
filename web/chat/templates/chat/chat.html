@@ -93,7 +93,7 @@ async function send() {
     log.innerHTML += `<div class="msg user">You: ${text}</div>`;
     input.value = "";
 
-    const res = await fetch("api/", {
+    const res = await fetch("/chat/api/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

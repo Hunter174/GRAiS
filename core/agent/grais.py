@@ -15,19 +15,14 @@ class GraisAgent(ABC):
     name: str = "base"
     description: str = ""
 
-    def __init__(
-        self, llm: Any,
-        system_prompt: str,
-        tts_model_id: Optional[str] = None,
-        tools: Optional[Iterable[Any]] = None,
-        streaming: bool = False,
-    ):
+    def __init__(self, llm: Any, system_prompt: str, tts_model_id: Optional[str] = None,
+                tools: Optional[Iterable[Any]] = None, streaming: bool = False, enable_tts: bool = False):
+
         self.llm = llm
         self.system_prompt = system_prompt
         self.tools = list(tools) if tools else []
         self.streaming = streaming
-
-        self.tts = TextToSpeech(tts_model_id) if tts_model_id else None
+        self.tts = TextToSpeech(tts_model_id) if (enable_tts and tts_model_id) else None
 
     def run(self, user_input: str):
         messages = [

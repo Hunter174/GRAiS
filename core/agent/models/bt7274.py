@@ -7,7 +7,7 @@ class BT7274Agent(GraisAgent):
     name = "BT-7274"
     description = "Calm, tactical, mission-oriented AI companion"
 
-    def __init__(self, tools=None, streaming=False):
+    def __init__(self, tools=None, streaming=False, enable_tts=False):
         persona = PersonaCompiler.load_persona("bt7274.persona.yaml")
 
         system_prompt = PersonaCompiler.compile_system_prompt(persona)
@@ -27,4 +27,5 @@ class BT7274Agent(GraisAgent):
             tts_model_id=tts_model_id,
             tools=tools,
             streaming=streaming,
+            enable_tts=enable_tts,
         )
