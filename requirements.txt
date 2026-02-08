@@ -1,17 +1,27 @@
-langchain
-langchain_ollama
-wikipedia
-torch
-torchaudio
-unsloth
-numpy
-soundfile
-librosa
-sentencepiece
-transformers
-accelerate
-omegaconf
-einx
-torchcodec
-soxr
-llama-cpp-python
+# ---------- Core ----------
+numpy>=1.26
+torch>=2.1
+soundfile>=0.12
+PyYAML>=6.0
+
+# ---------- Hugging Face / TTS ----------
+transformers>=4.40
+huggingface-hub>=0.23
+num2words>=0.5
+playsound3>=3.3
+
+# ---------- LangChain ----------
+langchain>=0.2
+langchain-core>=0.2
+
+# ---------- Wikipedia ----------
+wikipedia>=1.4
+
+# ---------- Google APIs ----------
+google-api-python-client>=2.120
+google-auth>=2.20
+google-auth-oauthlib>=1.2
+google-auth-httplib2>=0.2
+
+# ---------- Django ----------
+Django>=5.0
