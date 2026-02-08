@@ -317,3 +317,48 @@ button.primary {
 .msg.bot p {
     margin: 6px 0;
 }
+
+#tools {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+#tools .tool-toggle {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    white-space: nowrap;
+}
+
+/*--- Bubble anim----*/
+
+.msg.bot .bubble {
+    background: #eef2ff;        /* or whatever your bot bubble uses */
+    padding: 10px 14px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.msg.thinking .dot {
+    width: 8px;
+    height: 8px;
+    background: #555; /* ← visible against bubble */
+    border-radius: 50%;
+    animation: blink 1.4s infinite both;
+}
+
+.msg.thinking .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.msg.thinking .dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes blink {
+    0% { opacity: 0.2; }
+    20% { opacity: 1; }
+    100% { opacity: 0.2; }
+}

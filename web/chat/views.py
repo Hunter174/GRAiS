@@ -87,19 +87,25 @@ def chat_api(request):
             enable_tts=enable_tts,
         )
 
-        # --- Run current turn with memory ---
+        # --- Run agent ---
         out = agent.run(message, state.messages)
+        # out = {"text": str, "audio": bytes | None}
 
-        # --- Update memory ---
+        # --- Update memory (TEXT ONLY) ---
         state.messages.append({"role": "user", "content": message})
-        state.messages.append({"role": "assistant", "content": out.content})
+        state.messages.append({"role": "assistant", "content": out["text"]})
 
-        # --- Persist back to session ---
         request.session["agent_state"] = state_to_session(state)
 
+        # --- Encode audio if present ---
+        audio_b64 = None
+        if out.get("audio"):
+            import base64
+            audio_b64 = base64.b64encode(out["audio"]).decode("utf-8")
+
         return JsonResponse({
-            "response": out.content,
-            "tts_enabled": enable_tts,
+            "response": out["text"],
+            "audio": audio_b64,
         })
 
     except Exception as e:

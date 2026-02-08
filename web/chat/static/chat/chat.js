@@ -1,3 +1,21 @@
+let currentAudio = null;
+
+function playAudioBase64(base64Wav) {
+    // Stop previous audio to avoid overlap
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
+
+    const audio = new Audio(`data:audio/wav;base64,${base64Wav}`);
+    currentAudio = audio;
+
+    audio.play().catch(err => {
+        console.error("Audio playback failed:", err);
+    });
+}
+
+
 function handleKey(event) {
     if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
@@ -37,6 +55,8 @@ async function send() {
     appendMessage("user", text);
     input.value = "";
 
+    // show typing indicator immediately
+    showThinking();
     const res = await fetch("/chat/api/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -50,14 +70,53 @@ async function send() {
 
     const data = await res.json();
 
+    // remove typing indicator
+    removeThinking();
+
     if (data.error) {
         appendMessage("bot", data.error);
-    } else {
-        appendMessage("bot", data.response);
+        return;
+    }
+
+    appendMessage("bot", data.response);
+
+    if (enable_tts && data.audio) {
+        playAudioBase64(data.audio);
     }
 }
 
 async function resetChat() {
     await fetch("/chat/reset/", {method: "POST"});
     location.reload();
+}
+
+let thinkingNode = null;
+
+function showThinking() {
+    const log = document.getElementById("log");
+
+    const msg = document.createElement("div");
+    msg.className = "msg bot thinking";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble"; // 👈 IMPORTANT
+
+    bubble.innerHTML = `
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+    `;
+
+    msg.appendChild(bubble);
+    log.appendChild(msg);
+    log.scrollTop = log.scrollHeight;
+
+    thinkingNode = msg;
+}
+
+function removeThinking() {
+    if (thinkingNode) {
+        thinkingNode.remove();
+        thinkingNode = null;
+    }
 }

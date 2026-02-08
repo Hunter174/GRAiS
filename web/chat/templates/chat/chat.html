@@ -12,35 +12,6 @@
     <!-- ---------- Sidebar ---------- -->
     <aside id="sidebar">
         <div class="sidebar-section">
-            <h3>Agent Status</h3>
-            <div class="status-row">
-                <span class="status-dot idle"></span>
-                <span>Idle</span>
-            </div>
-        </div>
-
-        <div class="sidebar-section">
-            <h3>Session</h3>
-            <div class="meta">
-                <div>Persona: <strong id="active-persona">—</strong></div>
-                <div>Tools: <strong id="active-tools">—</strong></div>
-            </div>
-        </div>
-
-        <div class="sidebar-section">
-            <h3>Audio</h3>
-            <div class="muted">
-                Voice disabled
-            </div>
-            <!-- Waveform will live here later -->
-        </div>
-    </aside>
-
-    <!-- ---------- Main Chat ---------- -->
-    <div id="chat">
-        <h2>Agent Interface</h2>
-
-        <div class="controls">
             <label>
                 Persona:
                 <select id="persona">
@@ -49,21 +20,30 @@
                     {% endfor %}
                 </select>
             </label>
+        </div>
 
+        <div class="sidebar-section">
             <label>
-                Tools:
-                <select id="tools">
-                    {% for t in tool_sets %}
-                        <option value="{{ t }}">{{ t }}</option>
-                    {% endfor %}
-                </select>
+                    Tools:
+                    <select id="tools">
+                        {% for t in tool_sets %}
+                            <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
             </label>
+        </div>
 
+        <div class="sidebar-section">
             <label>
                 <input type="checkbox" id="enable_tts">
                 Enable TTS
             </label>
         </div>
+    </aside>
+
+    <!-- ---------- Main Chat ---------- -->
+    <div id="chat">
+        <h2>Agent Interface</h2>
 
         <div id="log"></div>
 

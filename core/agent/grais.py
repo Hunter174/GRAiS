@@ -1,18 +1,13 @@
 from abc import ABC
 from typing import Iterable, Optional, Any
 from langchain.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage, trim_messages
-from langchain_core.messages.base import BaseMessage
-from core.tts.infer import TextToSpeech
+from core.tts.registry import get_tts
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class GraisAgent(ABC):
-    """
-    Core agent abstraction.
-    """
-
     name: str = "base"
     description: str = ""
 
@@ -23,44 +18,31 @@ class GraisAgent(ABC):
         self.system_prompt = system_prompt
         self.tools = list(tools) if tools else []
         self.streaming = streaming
-        self.tts = TextToSpeech(tts_model_id) if (enable_tts and tts_model_id) else None
+        self.tts = get_tts(tts_model_id) if (enable_tts and tts_model_id) else None
 
     def run(self, user_input: str, history: list[dict] | None = None):
-        # Initialize messages with the system prompt first
-        messages: list[BaseMessage] = [SystemMessage(content=self.system_prompt)]
+        messages = [SystemMessage(content=self.system_prompt)]
 
-        # Initialize the history container
-        history_messages: list[BaseMessage] = []
         if history:
             for m in history:
                 if m["role"] == "user":
-                    history_messages.append(
-                        HumanMessage(content=m["content"])
-                    )
+                    messages.append(HumanMessage(content=m["content"]))
                 elif m["role"] == "assistant":
-                    history_messages.append(AIMessage(content=m["content"]))
+                    messages.append(AIMessage(content=m["content"]))
 
-            history_messages = trim_messages(history_messages, max_tokens=8000, token_counter="approximate")
-            messages.extend(history_messages)
+            messages = trim_messages(messages, max_tokens=8000, token_counter="approximate")
 
-        # Add the users message at the end
         messages.append(HumanMessage(content=user_input))
 
-        # Call the llm
         response = self.llm.invoke(messages)
 
-        # Given the response decide on an action
+        # Tool execution (unchanged)
         if isinstance(response, AIMessage) and response.tool_calls:
             tool_map = {tool.name: tool for tool in self.tools}
             tool_messages = []
 
             for call in response.tool_calls:
-                tool = tool_map[call["name"]]
-                result = tool.invoke(call["args"])
-
-                logger.debug("Tool call: %s", tool.name)
-                logger.debug("Result: %s", result)
-
+                result = tool_map[call["name"]].invoke(call["args"])
                 tool_messages.append(
                     ToolMessage(
                         tool_call_id=call["id"],
@@ -71,8 +53,11 @@ class GraisAgent(ABC):
             messages.extend([response, *tool_messages])
             response = self.llm.invoke(messages)
 
-        # TTS (only if configured)
+        audio_bytes = None
         if self.tts and isinstance(response, AIMessage):
-            self.tts.speak(response.content)
+            audio_bytes = self.tts.synthesize(response.content)
 
-        return response
+        return {
+            "text": response.content,
+            "audio": audio_bytes,
+        }

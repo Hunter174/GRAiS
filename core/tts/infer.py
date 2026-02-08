@@ -1,15 +1,14 @@
+import io
 import numpy as np
 import torch
 import soundfile as sf
 import re
-from pathlib import Path
 from transformers import (
     SpeechT5Processor,
     SpeechT5ForTextToSpeech,
     SpeechT5HifiGan,
 )
 from huggingface_hub import hf_hub_download
-from playsound3 import playsound
 from num2words import num2words
 
 
@@ -17,14 +16,10 @@ class TextToSpeech:
     VOCODER_ID = "microsoft/speecht5_hifigan"
     SAMPLE_RATE = 16000
 
-    def __init__(self, model_id: str, output_dir: str | Path = ".", device: str = "cpu"):
+    def __init__(self, model_id: str, device: str = "cpu"):
         self.model_id = model_id
         self.device = torch.device(device)
 
-        self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-
-        # Speaker embedding
         embed_path = hf_hub_download(
             repo_id=self.model_id,
             filename="embedding.npy",
@@ -35,15 +30,12 @@ class TextToSpeech:
             .to(self.device)
         )
 
-        # Model stack
         self.processor = SpeechT5Processor.from_pretrained(self.model_id)
-
         self.model = (
             SpeechT5ForTextToSpeech.from_pretrained(self.model_id)
             .to(self.device)
             .eval()
         )
-
         self.vocoder = (
             SpeechT5HifiGan.from_pretrained(self.VOCODER_ID)
             .to(self.device)
@@ -61,29 +53,45 @@ class TextToSpeech:
         return text
 
     @torch.no_grad()
-    def generate_wav(self, text: str, filename: str = "tts.wav") -> Path:
-        output_path = self.output_dir / filename
+    def synthesize(self, text: str) -> bytes:
+        text = self._normalize_text(text)
 
-        inputs = self.processor(text=text, return_tensors="pt")
-        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        chunks = split_sentences(text)
 
-        spectrogram = self.model.generate_speech(
-            inputs["input_ids"],
-            self.speaker_embeddings,
-        )
+        audio_parts = []
 
-        speech = self.vocoder(spectrogram)
+        for chunk in chunks:
+            inputs = self.processor(text=chunk, return_tensors="pt")
+            inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
-        sf.write(
-            output_path,
-            speech.squeeze().cpu().numpy(),
-            self.SAMPLE_RATE,
-        )
+            spectrogram = self.model.generate_speech(
+                inputs["input_ids"],
+                self.speaker_embeddings,
+            )
+            speech = self.vocoder(spectrogram)
 
-        return output_path
+            audio_parts.append(speech.squeeze().cpu())
 
-    def speak(self, text: str, filename: str = "tts.wav") -> Path:
-        normalized = self._normalize_text(text)
-        wav_path = self.generate_wav(normalized, filename)
-        playsound(str(wav_path))
-        return wav_path
+        full_audio = torch.cat(audio_parts)
+
+        buffer = io.BytesIO()
+        sf.write(buffer, full_audio.numpy(), self.SAMPLE_RATE, format="WAV")
+        buffer.seek(0)
+        return buffer.read()
+
+def split_sentences(text: str, max_chars=300):
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    chunks = []
+    current = ""
+
+    for s in sentences:
+        if len(current) + len(s) <= max_chars:
+            current += " " + s if current else s
+        else:
+            chunks.append(current)
+            current = s
+
+    if current:
+        chunks.append(current)
+
+    return chunks
