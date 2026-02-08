@@ -20,7 +20,6 @@ GRAiS is a personal project inspired by JARVIS, designed to evolve into a reliab
   Real-time speech recognition, paired with engaging sine wave visualizations, allowing natural conversations and command input.
 
 ---
-
 # Getting Started
 
 GRAiS is designed to run **fully locally** using **Ollama** for language models. This provides fast inference, zero API costs, and strong privacy guarantees.
@@ -32,7 +31,6 @@ GRAiS **requires the Ollama desktop application** and **a model that supports to
 Command-line–only or unsupported models will **not work**.
 
 ---
-
 ### Step 1: Install the Ollama Desktop App
 
 Download and install the official Ollama application:
@@ -47,7 +45,6 @@ The desktop app is **required**. It installs:
 After installation, **launch the Ollama app**.
 
 ---
-
 ### Step 2: Open the Ollama Chat Interface
 
 Once the app is running, you should see the Ollama chat window.
@@ -57,7 +54,6 @@ If you do not see the chat UI:
 - Restart Ollama if needed
 
 ---
-
 ### Step 3: Select the Required Model (Critical)
 
 In the **model selector dropdown** at the bottom of the chat window, select:
@@ -77,7 +73,6 @@ This model is required because it:
 Other models may appear to work but will **fail silently** when tools are invoked.
 
 ---
-
 ### Step 4: Verify the Model Is Active
 
 Confirm that the chat UI shows:
@@ -102,16 +97,24 @@ Install the required Python dependencies:
 pip install -r requirements.txt
 ```
 ---
-
 #### Run in Desktop Mode
 Start the desktop application:
 ```bash
 python desktop/main.py
 ```
----
 
+---
 #### Run in Web Mode
 Start the web server:
 ```bash
 python web/manage.py runserver
 ```
+
+---
+## Support & Feedback
+
+❤❤ Thank you for checking out GRAiS! ❤❤
+
+If you would like to see a feature added, an integration supported, 
+or an improvement made an issue. Feedback and suggestions are 
+greatly appreciated and help guide the direction of the project. 
