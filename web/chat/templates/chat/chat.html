@@ -1,127 +1,89 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Agent Chat</title>
-    <style>
-        body {
-            font-family: monospace;
-            background: #111;
-            color: #0f0;
-        }
-        #chat {
-            max-width: 800px;
-            margin: auto;
-        }
-        textarea {
-            width: 100%;
-            background: #000;
-            color: #0f0;
-        }
-        select, button {
-            margin-top: 10px;
-            background: #000;
-            color: #0f0;
-            border: 1px solid #0f0;
-        }
-        .msg {
-            margin: 10px 0;
-        }
-        .user {
-            color: #6cf;
-        }
-        .bot {
-            color: #0f0;
-        }
-        .controls {
-            margin-bottom: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'chat/chat.css' %}">
 </head>
+
 <body>
+<div id="app">
 
-<div id="chat">
-    <h2>Tactical Agent Interface</h2>
+    <!-- ---------- Sidebar ---------- -->
+    <aside id="sidebar">
+        <div class="sidebar-section">
+            <h3>Agent Status</h3>
+            <div class="status-row">
+                <span class="status-dot idle"></span>
+                <span>Idle</span>
+            </div>
+        </div>
 
-    <div class="controls">
-        <label>
-            Persona:
-            <select id="persona">
-                {% for p in personas %}
-                    <option value="{{ p }}">{{ p }}</option>
-                {% endfor %}
-            </select>
-        </label>
-        <label>
-            Tools:
-            <select id="tools">
-                {% for t in tool_sets %}
-                    <option value="{{ t }}">{{ t }}</option>
-                {% endfor %}
-            </select>
-        </label>
-        <label>
-            <input type="checkbox" id="enable_tts">
-            Enable TTS
-        </label>
+        <div class="sidebar-section">
+            <h3>Session</h3>
+            <div class="meta">
+                <div>Persona: <strong id="active-persona">—</strong></div>
+                <div>Tools: <strong id="active-tools">—</strong></div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>Audio</h3>
+            <div class="muted">
+                Voice disabled
+            </div>
+            <!-- Waveform will live here later -->
+        </div>
+    </aside>
+
+    <!-- ---------- Main Chat ---------- -->
+    <div id="chat">
+        <h2>Agent Interface</h2>
+
+        <div class="controls">
+            <label>
+                Persona:
+                <select id="persona">
+                    {% for p in personas %}
+                        <option value="{{ p }}">{{ p }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label>
+                Tools:
+                <select id="tools">
+                    {% for t in tool_sets %}
+                        <option value="{{ t }}">{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label>
+                <input type="checkbox" id="enable_tts">
+                Enable TTS
+            </label>
+        </div>
+
+        <div id="log"></div>
+
+        <div id="input-bar">
+            <textarea
+                id="input"
+                rows="2"
+                onkeydown="handleKey(event)"
+                placeholder="Type your message…"
+            ></textarea>
+
+            <div class="buttons">
+                <button class="primary" onclick="send()">Send</button>
+                <button onclick="resetChat()">Reset</button>
+            </div>
+        </div>
     </div>
 
-    <div id="log"></div>
-
-    <textarea
-        id="input"
-        rows="3"
-        onkeydown="handleKey(event)"
-    ></textarea>
-    <button onclick="send()">Send</button>
-    <button onclick="resetChat()">Reset</button>
 </div>
-
-<script>
-function handleKey(event) {
-    if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        send();
-    }
-}
-
-async function send() {
-    const input = document.getElementById("input");
-    const log = document.getElementById("log");
-
-    const text = input.value.trim();
-    if (!text) return;
-
-    const persona = document.getElementById("persona").value;
-    const tools = document.getElementById("tools").value;
-    const enable_tts = document.getElementById("enable_tts").checked;
-
-    log.innerHTML += `<div class="msg user">You: ${text}</div>`;
-    input.value = "";
-
-    const res = await fetch("/chat/api/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            message: text,
-            persona: persona,
-            tools: tools,
-            enable_tts: enable_tts,
-        })
-    });
-
-    const data = await res.json();
-
-    if (data.error) {
-        log.innerHTML += `<div class="msg bot">Error: ${data.error}</div>`;
-    } else {
-        log.innerHTML += `<div class="msg bot">${persona}: ${data.response}</div>`;
-    }
-}
-
-async function resetChat() {
-    await fetch("/chat/reset/", { method: "POST" });
-    location.reload();
-}
-</script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="{% static 'chat/chat.js' %}"></script>
 </body>
 </html>

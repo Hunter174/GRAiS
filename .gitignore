@@ -1,6 +1,7 @@
 # Additional ignroes
 *.gguf
 *.onnx
+*.wav
 
 /sparktts
 /Spark-TTS
