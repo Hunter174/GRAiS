@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Agent Interface</title>
+    <link rel="stylesheet" href="{% static 'chat/chat.css' %}">
+
+    <style>
+        /* Home-specific layout */
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .home-card {
+            width: 100%;
+            max-width: 520px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow:
+                0 1px 2px rgba(0, 0, 0, 0.05),
+                0 12px 32px rgba(0, 0, 0, 0.10);
+        }
+
+        .home-header {
+            margin-bottom: 20px;
+        }
+
+        .home-header h1 {
+            margin: 0 0 6px 0;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .home-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .home-actions {
+            margin-top: 28px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .home-actions a {
+            text-decoration: none;
+        }
+
+        .home-actions .primary {
+            padding: 10px 16px;
+            font-size: 14px;
+        }
+
+        .home-meta {
+            margin-top: 24px;
+            font-size: 12px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="home-card">
+    <div class="home-header">
+        <h1>Agent Interface</h1>
+        <p>
+            Multi-persona conversational agent with tool orchestration
+            and optional voice synthesis.
+        </p>
+    </div>
+
+    <div class="home-actions">
+        <a href="{% url 'chat_page' %}">
+            <button class="primary">
+                Launch Chat
+            </button>
+        </a>
+    </div>
+
+    <div class="home-meta">
+        <span>Status: Ready</span>
+        <span>v0.1</span>
+    </div>
+</div>
+
+</body>
+</html>

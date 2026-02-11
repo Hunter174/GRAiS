@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Agent Chat</title>
+    <link rel="stylesheet" href="{% static 'chat/chat.css' %}">
+</head>
+
+<body>
+<div id="app">
+
+    <!-- ---------- Sidebar ---------- -->
+    <aside id="sidebar">
+        <div class="sidebar-section">
+            <label>
+                Persona:
+                <select id="persona">
+                    {% for p in personas %}
+                        <option value="{{ p }}">{{ p }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </div>
+
+        <div class="sidebar-section">
+            <label>
+                    Tools:
+                    <select id="tools">
+                        {% for t in tool_sets %}
+                            <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
+            </label>
+        </div>
+
+        <div class="sidebar-section">
+            <label>
+                <input type="checkbox" id="enable_tts">
+                Enable TTS
+            </label>
+        </div>
+    </aside>
+
+    <!-- ---------- Main Chat ---------- -->
+    <div id="chat">
+        <h2>Agent Interface</h2>
+
+        <div id="log"></div>
+
+        <div id="input-bar">
+            <textarea
+                id="input"
+                rows="2"
+                onkeydown="handleKey(event)"
+                placeholder="Type your message…"
+            ></textarea>
+
+            <div class="buttons">
+                <button class="primary" onclick="send()">Send</button>
+                <button onclick="resetChat()">Reset</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="{% static 'chat/chat.js' %}"></script>
+</body>
+</html>
