@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-from core.agent.models.bt7274 import BT7274Agent
+from core.agent.registry import PERSONAS
 from core.agent.utility import AgentState, state_from_session, state_to_session
 from core.tools.registry import get_tools
 
@@ -11,10 +11,6 @@ TOOL_SETS = {
     "system": ["system"],
     "system_web": ["system", "web"],
     "full": ["system", "web", "external"],
-}
-
-PERSONAS = {
-    "bt7274": BT7274Agent,
 }
 
 ALLOWED_SETTINGS = {

@@ -19,7 +19,7 @@ class PersonaCompiler:
         lines = []
 
         # Identity (abstracted)
-        lines.append(f"You are {persona['persona_name']}, a tactical AI assistant.")
+        lines.append(f"You are {persona['persona_name']}, a an AI assistant.")
         lines.append("")
 
         # Tone
